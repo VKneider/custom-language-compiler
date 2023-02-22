@@ -4,8 +4,15 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include<array> 
+#include <vector>
 
 using namespace std;
+
+/*Añadir en Tools > Compiler options
+Compiler Options -std=c++11
+Library Options -static-libgcc
+*/
+
 
 /*
 Proyecto de Desarrollo de un Compilador.
@@ -25,7 +32,7 @@ FASE I: ANALIZADOR LEXICO
 */
 
 
-// Enum to represent the different token types
+// Enum para representar todos los tipos de tokens posibles
 enum TokenType {
   KEYWORD,
   IDENTIFIER,
@@ -34,24 +41,29 @@ enum TokenType {
   LOGIC_OP,
   BRACKET,
   SEPARATOR,
-  BLANK,
   ENDOF
 };
 
+//Array de string para luego mostrar los tipos en los cout
 string TokenTypeNames[] = {"KEYWORD", "IDEN", "DIGIT", "ARITHMETIC_OP", "LOGIC_OP", "BRACKET", "SEPARATOR", "ENDOF", "BLANK"};
+
+//Array que contiene todas las palabras reservadas de nuestro lenguaje
 string Keywords[]={"Variable", "Fin", "Inicio"};
 
-// Class to represent a token
+//Clase para representar un token
 class Token {
 public:
   TokenType type;
   string value;
 
   // The colon ':' is used to initialize the members of a class 
-  Token(TokenType type, string value) : type(type), value(value) {}
+  Token(TokenType t, string v) {
+    type = t; 
+    value = v;
+  }
 };
 
-// Lexer class
+// Clase para representar el lexer, tokenizer (analizador lexico), contiene metodos para leer el input
 class Lexer {
 private:
   string input;
@@ -59,8 +71,9 @@ private:
   char current_char;
 
 public:
-  // Constructor. The colon ':' is used to initialize the members of a class 
-  Lexer(string input) : input(input), pos(0) {
+  Lexer(string i) {
+    input = i;
+    pos = 0;
     current_char = input.at(pos);
   }
 
@@ -112,12 +125,12 @@ public:
       }
 
       if (isblank(current_char)) {
-        string blank;
+       // string blank;
         while (isblank(current_char)) {
-          blank.push_back(current_char);
+         // blank.push_back(current_char);
           advance();
         }
-        return Token(BLANK, " ");
+        continue;
       }
 
       if (current_char == '+') {
@@ -164,17 +177,45 @@ public:
   }
 };
 
+//Funcion para leer un archivo txt
+string readFile(string filename) 
+{ 
+    ifstream inFile; 
+    inFile.open(filename); // Se abre el archivo
+
+    string content; //Contenido del archivo, donde se almacenan todas las lineas
+    
+    string line; //Contenido de la línea, variable temporal
+
+    //Si el archivo ya está abierto, se termina el programa.
+    if (!inFile) { 
+        cout << "Unable to open file"<<endl;
+        exit(1);
+    }
+    
+    //Ciclo para obtener cada una de las lineas del archivo
+    while (getline(inFile, line)) { 
+        content += line;  
+    }
+
+    inFile.close(); //Se cierra el archivo
+
+    return content; //Se retorna el contenido
+}
 
 
-// Main function to test the lexer
+// Función principal donde se ejecuta todo
 int main() {
-
-  string input = "Variable _X=5. Y_ = 7. Sum = 5. Inicio R = _X + Sum * (Y_ + _X) Fin";
-
-  Lexer lexer(input);
-
+  
+  string str = readFile("./text.txt");
+  Lexer lexer(str);
+  
+  //Este vector representa la tabla de simbolos
+  vector<Token> token_list;
+  
   Token token = lexer.get_next_token();
-
+  token_list.push_back(token);
+  
   ofstream Myfile ("Compis.txt", ofstream::out);    
   
   	cout <<"-----------------------------------------------------------------------------------------------------------------------"<<endl;
@@ -190,18 +231,25 @@ int main() {
 	cout <<"#            Lexema	       #              Tipo	        #  "<<endl;
 	cout <<"#######################################################################################################################"<<endl;
   while (token.type != ENDOF) {
-
-    if (token.type != BLANK){
+    
     	if(TokenTypeNames[token.type]=="KEYWORD"){
     		cout << "            "<< token.value <<"          		      "<< TokenTypeNames[token.type] << endl;
+    		Myfile << "            "<< token.value <<"          		      "<< TokenTypeNames[token.type] << endl;
+    		
 		}else{
 			cout << "            "<< token.value <<"        		             "<< TokenTypeNames[token.type] << endl;
+			Myfile << "            "<< token.value <<"        		             "<< TokenTypeNames[token.type] << endl;
 		}
     	
-    //Myfile << "Found token '" << token.value << "' with type " << TokenTypeNames[token.type] << endl;
-    }
+        
     token = lexer.get_next_token();
+    token_list.push_back(token);
   }
   Myfile.close();
+  
   return 0;
 }
+
+
+
+
