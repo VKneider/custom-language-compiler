@@ -1,2 +1,8 @@
-Variable _X=5. Y_ = 7. Sum = 5. Inicio R = _X + Sum * (Y_ + _X) Fin Hola Chao
-Esteban Dido Francisco. . Diego . Victor * + - Sofia
+VARIABLE 
+_X=5. 
+Y_ = 7. 
+Sum = 5. 
+BEGIN 
+R = _X + Sum * (Y_ + _X).
+F =  4.
+END

@@ -1,0 +1,53 @@
+Could you generate a parser using the recursive descent parser for this grammar?
+
+program : KW_VARIABLE definitions KW_BEGIN stmt-list KW_END 
+
+definitions : variable_def | variable_def definitions
+
+variable_def : IDENTIFIER ASSIGNER NUMBER SEPARATOR
+
+stmt-list : statement | statement stmt-list
+
+statement : variable_assignment | expression
+
+variable_assignment : IDENTIFIER ASSIGNER expression SEPARATOR 
+
+expression : term { (OP_ADDITION | OP_SUBSTRACT) term }
+
+term : factor { (OP_MULTIPLY | OP_DIVIDE | OP_POWER) factor }
+
+factor : NUMBER | IDENTIFIER | LEFT_PAREN expression RIGHT_PAREN
+
+IDENTIFIER : LETTER { LETTER | DIGIT | UNDERSCORE }
+
+NUMBER : DIGIT | DIGIT NUMBER
+
+LETTER : [a-zA-Z]
+
+DIGIT : [0-9]
+
+UNDERSCORE : "_"
+
+KW_VARIABLE : "VARIABLE"
+
+KW_BEGIN : "BEGIN"
+
+KW_END : "END"
+
+ASSIGNER : "="
+
+OP_ADDITION : "+"
+
+OP_SUBSTRACT : "-"
+
+OP_POWER : "^"
+
+OP_MULTIPLY : "*"
+
+OP_DIVIDE : "/"
+
+LEFT_PAREN : "("
+
+RIGHT_PAREN : ")"
+
+SEPARATOR : "."

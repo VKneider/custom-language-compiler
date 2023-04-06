@@ -3,253 +3,406 @@
 #include <fstream>
 #include <ctype.h>
 #include <stdlib.h>
-#include<array> 
+#include <array>
 #include <vector>
 
 using namespace std;
 
-/*Añadir en Tools > Compiler options
+/*Aï¿½adir en Tools > Compiler options
 Compiler Options -std=c++11
 Library Options -static-libgcc
 */
 
-
 /*
 Proyecto de Desarrollo de un Compilador.
-Lenguaje Copi 
+Lenguaje Copi
 Integrantes: Eduardo Morales, Andres Alvarez, Maria Fernanda, Victor Kneider.
 
 Estructura:
 Variable											Variable
-	iden = numero.										X = 5.
-	iden = numero.										Y_ = 7.
-	iden = numero.										Sum = 3.
+  iden = numero.										X = 5.
+  iden = numero.										Y_ = 7.
+  iden = numero.										Sum = 3.
 Inicio												Inicio
-	iden = Expresion_Aritmetca							R = X + Sum * (Y_ + X)
+  iden = Expresion_Aritmetca							R = X + Sum * (Y_ + X)
 Fin												  	Fin
 
 FASE I: ANALIZADOR LEXICO
 */
 
-
 // Enum para representar todos los tipos de tokens posibles
-enum TokenType {
-  KEYWORD,
+enum TokenType
+{
   IDENTIFIER,
   DIGIT,
-  ARITHMETIC_OP,
-  LOGIC_OP,
-  BRACKET,
+  OP_ADDITION,
+  OP_SUBSTRACT,
+  OP_MULTIPLY,
+  OP_DIVIDE,
+  OP_POWER,
+  LEFT_PAREN,
+  RIGHT_PAREN,
   SEPARATOR,
-  ENDOF
+  KW_BEGIN,
+  KW_END,
+  KW_VARIABLE,
+  ASSIGNER
 };
 
-//Array de string para luego mostrar los tipos en los cout
-string TokenTypeNames[] = {"KEYWORD", "IDEN", "DIGIT", "ARITHMETIC_OP", "LOGIC_OP", "BRACKET", "SEPARATOR", "ENDOF", "BLANK"};
+// Array de string para luego mostrar los tipos en los cout
+string TokenTypeNames[] = {"IDENTIFIER",
+                           "DIGIT",
+                           "OP_ADDITION",
+                           "OP_SUBSTRACT",
+                           "OP_MULTIPLY",
+                           "OP_DIVIDE",
+                           "OP_POWER",
+                           "LEFT_PAREN",
+                           "RIGHT_PAREN",
+                           "SEPARATOR",
+                           "KW_BEGIN",
+                           "KW_END",
+                           "KW_VARIABLE",
+						   "ASSIGNER"};
 
-//Array que contiene todas las palabras reservadas de nuestro lenguaje
-string Keywords[]={"Variable", "Fin", "Inicio"};
+// Array que contiene todas las palabras reservadas de nuestro lenguaje
+string Keywords[] = {"VARIABLE", "BEGIN", "END"};
 
-//Clase para representar un token
-class Token {
+// Clase para representar un token
+class Token
+{
 public:
   TokenType type;
   string value;
 
-  // The colon ':' is used to initialize the members of a class 
-  Token(TokenType t, string v) {
-    type = t; 
+  // The colon ':' is used to initialize the members of a class
+  Token(TokenType t, string v)
+  {
+    type = t;
     value = v;
   }
 };
 
 // Clase para representar el lexer, tokenizer (analizador lexico), contiene metodos para leer el input
-class Lexer {
+class Lexer
+{
 private:
   string input;
   int pos;
   char current_char;
 
 public:
-  Lexer(string i) {
+  Lexer(string i)
+  {
     input = i;
     pos = 0;
     current_char = input.at(pos);
   }
 
   // Move to the next character in the input
-  void advance() {
+  void advance()
+  {
     pos++;
-    if (pos > input.length() - 1) {
+    if (pos > input.length() - 1)
+    {
       current_char = 0;
-    } else {
+    }
+    else
+    {
       current_char = input.at(pos);
     }
   }
 
   // Generate a token
-  Token get_next_token() {
-    while (current_char != 0) {
+  Token get_next_token()
+  {
+    while (current_char != 0)
+    {
 
-      if (isdigit(current_char)) {
+      if (isdigit(current_char))
+      {
         string number;
-        while (isdigit(current_char)) {
+        while (isdigit(current_char))
+        {
           number.push_back(current_char);
           advance();
         }
         return Token(DIGIT, number);
-      } 
-      
-      if (isalpha(current_char) || current_char == '_') {
+      }
+
+      if (isalpha(current_char) || current_char == '_')
+      {
         string word;
-        while (isalpha(current_char) || current_char == '_') {
+        while (isalpha(current_char) || current_char == '_')
+        {
           word.push_back(current_char);
           advance();
         }
-        
-        int flag=0;
-        int len = end(Keywords)-begin(Keywords);
-        
-    	for(int i=0;i<len;i++){
-    		if(word==Keywords[i]){flag=1;}
-    		
-		}
-		
-        if (flag==1)
+
+        int flag = 0;
+        int len = end(Keywords) - begin(Keywords);
+
+        for (int i = 0; i < len; i++)
         {
-          return Token(KEYWORD, word);
-        }else{
-          return Token(IDENTIFIER, word);
-		}
-        
+          if (word == Keywords[i])
+          {
+            switch (i)
+            {
+            case 0:
+              return Token(KW_VARIABLE, word);
+
+            case 1:
+              return Token(KW_BEGIN, word);
+            case 2:
+              return Token(KW_END, word);
+            }
+          }
+          
+        }
+        return Token(IDENTIFIER, word);
       }
 
-      if (isblank(current_char)) {
-       // string blank;
-        while (isblank(current_char)) {
-         // blank.push_back(current_char);
+      if (isblank(current_char))
+      {
+        // string blank;
+        while (isblank(current_char))
+        {
+          // blank.push_back(current_char);
           advance();
         }
         continue;
       }
 
-      if (current_char == '+') {
+      if (current_char == '+')
+      {
         advance();
-        return Token(ARITHMETIC_OP, "+");
+        return Token(OP_ADDITION, "+");
       }
 
-      if (current_char == '-') {
+      if (current_char == '-')
+      {
         advance();
-        return Token(ARITHMETIC_OP, "-");
+        return Token(OP_SUBSTRACT, "-");
       }
 
-      if (current_char == '*') {
+      if (current_char == '*')
+      {
         advance();
-        return Token(ARITHMETIC_OP, "*");
+        return Token(OP_MULTIPLY, "*");
       }
 
-      if (current_char == '/') {
+      if (current_char == '/')
+      {
         advance();
-        return Token(ARITHMETIC_OP, "/");
+        return Token(OP_DIVIDE, "/");
       }
 
-      if (current_char == '=') {
+      if (current_char == '=')
+      {
         advance();
-        return Token(LOGIC_OP, "=");
+        return Token(ASSIGNER, "=");
       }
 
-      if (current_char == '.') {
+      if (current_char == '.')
+      {
         advance();
         return Token(SEPARATOR, ".");
       }
 
-      if (current_char == '(' || current_char == ')') {
-        string brace;
-        brace.push_back(current_char);
+      if (current_char == '.')
+      {
         advance();
-        return Token(BRACKET, brace);
+        return Token(SEPARATOR, ".");
+      }
+
+      if (current_char == '(')
+      {
+        advance();
+        return Token(LEFT_PAREN, "(");
+      }
+
+      if (current_char == ')')
+      {
+        advance();
+        return Token(RIGHT_PAREN, ")");
       }
 
       throw "Error parsing input";
     }
 
-    return Token(ENDOF, "");
+    
   }
 };
 
-//Funcion para leer un archivo txt
-string readFile(string filename) 
-{ 
-    ifstream inFile; 
-    inFile.open(filename); // Se abre el archivo
+// Funcion para leer un archivo txt
+string readFile(string filename)
+{
+  ifstream inFile;
+  inFile.open(filename); // Se abre el archivo
 
-    string content; //Contenido del archivo, donde se almacenan todas las lineas
-    
-    string line; //Contenido de la línea, variable temporal
+  string content; // Contenido del archivo, donde se almacenan todas las lineas
 
-    //Si el archivo ya está abierto, se termina el programa.
-    if (!inFile) { 
-        cout << "Unable to open file"<<endl;
-        exit(1);
-    }
-    
-    //Ciclo para obtener cada una de las lineas del archivo
-    while (getline(inFile, line)) { 
-        content += line;  
-    }
+  string line; // Contenido de la lï¿½nea, variable temporal
 
-    inFile.close(); //Se cierra el archivo
+  // Si el archivo ya estï¿½ abierto, se termina el programa.
+  if (!inFile)
+  {
+    cout << "Unable to open file" << endl;
+    exit(1);
+  }
 
-    return content; //Se retorna el contenido
+  // Ciclo para obtener cada una de las lineas del archivo
+  while (getline(inFile, line))
+  {
+    content += line;
+  }
+
+  inFile.close(); // Se cierra el archivo
+
+  return content; // Se retorna el contenido
 }
 
 
-// Función principal donde se ejecuta todo
-int main() {
-  
+
+class Parser {
+public:
+    Parser(vector<Token> tokens) : tokens(tokens), pos(0) {}
+
+    void parse() {
+        program();
+        // Check that we've consumed all tokens
+        if (pos != tokens.size()) {
+            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value);
+        }
+        cout << "Parsing succeeded." << endl;
+    }
+
+private:
+    void match(TokenType expected) {
+        if (tokens[pos].type != expected) {
+            // Throw an exception indicating the position of the error
+            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value);
+        }
+        pos++;
+    }
+
+    void program() {
+        match(KW_VARIABLE);
+        definitions();
+        match(KW_BEGIN);
+        stmt_list();
+        match(KW_END);
+    }
+
+    void definitions() {
+        if (tokens[pos].type == IDENTIFIER) {
+            variable_def();
+            definitions();
+        }
+        // Otherwise, do nothing (epsilon production)
+    }
+
+    void variable_def() {
+        match(IDENTIFIER);
+        match(ASSIGNER);
+        match(DIGIT);
+        match(SEPARATOR);
+    }
+
+    void stmt_list() {
+        if (tokens[pos].type == IDENTIFIER || tokens[pos].type == LEFT_PAREN) {
+            statement();
+            stmt_list();
+        }
+        // Otherwise, do nothing (epsilon production)
+    }
+
+    void statement() {
+        if (tokens[pos].type == IDENTIFIER) {
+            variable_assignment();
+        } else {
+            expression();
+        }
+    }
+
+    void variable_assignment() {
+        match(IDENTIFIER);
+        match(ASSIGNER);
+        expression();
+        match(SEPARATOR);
+    }
+
+    void expression() {
+        term();
+        while (tokens[pos].type == OP_ADDITION || tokens[pos].type == OP_SUBSTRACT) {
+            match(tokens[pos].type);
+            term();
+        }
+    }
+
+    void term() {
+        factor();
+        while (tokens[pos].type == OP_MULTIPLY || tokens[pos].type == OP_DIVIDE || tokens[pos].type == OP_POWER) {
+            match(tokens[pos].type);
+            factor();
+        }
+    }
+
+    void factor() {
+        if (tokens[pos].type == DIGIT) {
+            match(DIGIT);
+        } else if (tokens[pos].type == IDENTIFIER) {
+            match(IDENTIFIER);
+        } else if (tokens[pos].type == LEFT_PAREN) {
+            match(LEFT_PAREN);
+            expression();
+            match(RIGHT_PAREN);
+        } else {
+            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value);
+        }
+    }
+
+    vector<Token> tokens;
+    size_t pos;
+};
+
+
+
+
+
+// Funciï¿½n principal donde se ejecuta todo
+int main()
+{
+
   string str = readFile("./text.txt");
   Lexer lexer(str);
-  
-  //Este vector representa la tabla de simbolos
+
+  // Este vector representa la tabla de simbolos
   vector<Token> token_list;
-  
+
   Token token = lexer.get_next_token();
   token_list.push_back(token);
-  
-  ofstream Myfile ("Compis.txt", ofstream::out);    
-  
-  	cout <<"-----------------------------------------------------------------------------------------------------------------------"<<endl;
-  	cout <<"		########  #######  ##    ## ######## ##    ## #### ######## ######## ########  "<< endl;
-	cout <<"		   ##    ##     ## ##   ##  ##       ###   ##  ##       ##  ##       ##     ## "<< endl;
-	cout <<"		   ##    ##     ## ##  ##   ##       ####  ##  ##      ##   ##       ##     ## "<< endl;
-	cout <<"		   ##    ##     ## #####    ######   ## ## ##  ##     ##    ######   ########  "<< endl;
-	cout <<"		   ##    ##     ## ##  ##   ##       ##  ####  ##    ##     ##       ##   ##   "<< endl;
-	cout <<"		   ##    ##     ## ##   ##  ##       ##   ###  ##   ##      ##       ##    ##  "<< endl;
-	cout <<"		   ##     #######  ##    ## ######## ##    ## #### ######## ######## ##     ## "<<endl;
-	cout <<"-----------------------------------------------------------------------------------------------------------------------\n\n"<<endl;
-	cout <<"#######################################################################################################################"<<endl;
-	cout <<"#            Lexema	       #              Tipo	        #  "<<endl;
-	cout <<"#######################################################################################################################"<<endl;
-  while (token.type != ENDOF) {
-    
-    	if(TokenTypeNames[token.type]=="KEYWORD"){
-    		cout << "            "<< token.value <<"          		      "<< TokenTypeNames[token.type] << endl;
-    		Myfile << "            "<< token.value <<"          		      "<< TokenTypeNames[token.type] << endl;
-    		
-		}else{
-			cout << "            "<< token.value <<"        		             "<< TokenTypeNames[token.type] << endl;
-			Myfile << "            "<< token.value <<"        		             "<< TokenTypeNames[token.type] << endl;
-		}
-    	
-        
+
+  ofstream Myfile("Compis.txt", ofstream::out);
+
+  while (token.type != KW_END)
+  {
     token = lexer.get_next_token();
+    cout << TokenTypeNames[token.type] << " - " << token.value << endl;
     token_list.push_back(token);
+    
   }
   Myfile.close();
   
+  Parser parser(token_list);
+  try {
+    parser.parse();
+    cout << "Parsing succeeded!" << endl;
+  } catch (const exception& e) {
+    cout << "Parsing failed: " << e.what() << endl;
+  }
+  
+  
+
   return 0;
 }
-
-
-
-
