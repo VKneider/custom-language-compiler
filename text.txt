@@ -1,8 +1,8 @@
 VARIABLE 
-_X=5. 
-Y_ = 7. 
-Sum = 5. 
-BEGIN 
+_X=5.
+_Y_ = 7. 
+Sum = 5.
+BEGIN.
 R = _X + Sum * (Y_ + _X).
 F =  4.
 END

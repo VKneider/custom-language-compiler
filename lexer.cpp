@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <array>
 #include <vector>
+#include <sstream>
 
 using namespace std;
 
@@ -48,6 +49,8 @@ enum TokenType
   KW_VARIABLE,
   ASSIGNER
 };
+
+string expectedToken = "KW_VARIABLE";
 
 // Array de string para luego mostrar los tipos en los cout
 string TokenTypeNames[] = {"IDENTIFIER",
@@ -178,6 +181,12 @@ public:
         advance();
         return Token(OP_ADDITION, "+");
       }
+      
+        if (current_char == '^')
+      {
+        advance();
+        return Token(OP_POWER, "^");
+      }
 
       if (current_char == '-')
       {
@@ -209,11 +218,7 @@ public:
         return Token(SEPARATOR, ".");
       }
 
-      if (current_char == '.')
-      {
-        advance();
-        return Token(SEPARATOR, ".");
-      }
+
 
       if (current_char == '(')
       {
@@ -272,29 +277,36 @@ public:
         program();
         // Check that we've consumed all tokens
         if (pos != tokens.size()) {
-            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value);
+            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value + "  with expected Token: " + expectedToken);
         }
         cout << "Parsing succeeded." << endl;
     }
 
 private:
     void match(TokenType expected) {
+    	std::ostringstream oss;
+		oss << expected;
+		string objectString = oss.str();
         if (tokens[pos].type != expected) {
             // Throw an exception indicating the position of the error
-            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value);
+            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value + "  with expected Token: " + expectedToken);
         }
         pos++;
     }
 
     void program() {
+    	expectedToken = "KW_VARIABLE";
         match(KW_VARIABLE);
         definitions();
+        expectedToken = "KW_BEGIN";
         match(KW_BEGIN);
         stmt_list();
+        expectedToken = "KW_END";
         match(KW_END);
     }
 
     void definitions() {
+    	expectedToken = "IDENTIFIER";
         if (tokens[pos].type == IDENTIFIER) {
             variable_def();
             definitions();
@@ -303,13 +315,18 @@ private:
     }
 
     void variable_def() {
+    	expectedToken = "IDENTIFIER";
         match(IDENTIFIER);
+        expectedToken = "ASSIGNER";
         match(ASSIGNER);
+        expectedToken = "DIGIT";
         match(DIGIT);
+        expectedToken = "SEPARATOR";
         match(SEPARATOR);
     }
 
     void stmt_list() {
+    	expectedToken = "IDENTIFIER or LEFT_PAREN";
         if (tokens[pos].type == IDENTIFIER || tokens[pos].type == LEFT_PAREN) {
             statement();
             stmt_list();
@@ -318,6 +335,7 @@ private:
     }
 
     void statement() {
+    	expectedToken = "IDENTIFIER or TERM";
         if (tokens[pos].type == IDENTIFIER) {
             variable_assignment();
         } else {
@@ -326,14 +344,18 @@ private:
     }
 
     void variable_assignment() {
+    	expectedToken = "IDENTIFIER";
         match(IDENTIFIER);
+        expectedToken = "ASSIGNER";
         match(ASSIGNER);
         expression();
+        expectedToken = "SEPARATOR";
         match(SEPARATOR);
     }
 
     void expression() {
         term();
+        expectedToken = "OP_ADDITTION OR OP_SUBSTRACT";
         while (tokens[pos].type == OP_ADDITION || tokens[pos].type == OP_SUBSTRACT) {
             match(tokens[pos].type);
             term();
@@ -342,6 +364,7 @@ private:
 
     void term() {
         factor();
+        expectedToken = "OP_MULTIPLY OR OP_DIVIDE OR OP_POWER";
         while (tokens[pos].type == OP_MULTIPLY || tokens[pos].type == OP_DIVIDE || tokens[pos].type == OP_POWER) {
             match(tokens[pos].type);
             factor();
@@ -350,23 +373,23 @@ private:
 
     void factor() {
         if (tokens[pos].type == DIGIT) {
+        	expectedToken = "DIGIT";
             match(DIGIT);
         } else if (tokens[pos].type == IDENTIFIER) {
+        	expectedToken = "IDENTIFIER";
             match(IDENTIFIER);
         } else if (tokens[pos].type == LEFT_PAREN) {
+        	expectedToken = "LEFT_PAREN";
             match(LEFT_PAREN);
             expression();
+            expectedToken = "RIGHT_PAREN";
             match(RIGHT_PAREN);
-        } else {
-            throw runtime_error("Unexpected token at position " + to_string(pos) + ": " + tokens[pos].value);
-        }
+        } 
     }
 
     vector<Token> tokens;
     size_t pos;
 };
-
-
 
 
 
@@ -388,7 +411,7 @@ int main()
   while (token.type != KW_END)
   {
     token = lexer.get_next_token();
-    cout << TokenTypeNames[token.type] << " - " << token.value << endl;
+    	cout << TokenTypeNames[token.type] << " - " << token.value << endl;
     token_list.push_back(token);
     
   }
